@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+  auth:
+    image: clems4ever/authelia:v3.15.0
+    container_name: authelia
+    labels:
+      traefik.frontend.rule: "Host:auth.example.org"
+      traefik.port: 9091
+      traefik.enable: true
+    volumes:
+      - ./authelia_config.yml:/etc/authelia/config.yml:ro
+  redis:
+    container_name: authelia_redis
+    image: redis:5.0.5-alpine
+  mongo:
+    container_name: authelia_mongo
+    image: mongo:3.4.21-xenial
+    environment:
+      MONGO_INITDB_DATABASE: my_authelia
+    volumes:
+      - mongo_data:/data/db
+  openldap:
+    container_name: openldap
+    image: osixia/openldap:1.2.4
+    volumes:
+      - ldap_db:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+      - ./user_mike.ldif:/tmp/user_mike.ldif
+    environment:
+      LDAP_ORGANISATION: 'Example Inc'
+      LDAP_DOMAIN: 'example.org'
+      LDAP_ADMIN_PASSWORD: 'admin'
+      LDAP_CONFIG_PASSWORD: 'config'
+  traefik:
+    image: traefik:1.7.12
+    ports:
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./traefik.toml:/etc/traefik/traefik.toml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+  my_webservice:
+    image: kennship/http-echo
+    labels:
+      traefik.frontend.rule: 'Host:web.example.org'
+      traefik.port: 3000
+      traefik.enable: true
+
+volumes:
+  mongo_data:
+  ldap_db:
+  ldap_config:

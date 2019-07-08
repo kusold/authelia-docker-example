@@ -1,0 +1,24 @@
+# traefik.toml
+################################################################
+# Global configuration
+################################################################
+
+debug = true
+logLevel = "ERROR"
+
+defaultEntryPoints = ["https"]
+
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+    [entryPoints.https.auth.forward]
+    address = "http://authelia:9091/api/verify?rd=https://auth.example.org/%23/"
+
+[web]
+address = ":8080"
+
+[docker]
+watch = true
+exposedByDefault = false
